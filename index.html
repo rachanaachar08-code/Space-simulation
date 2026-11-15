@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Simulation</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0b132b;
+      color: #ffffff;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container { max-width: 750px; width: 100%; }
+    .card {
+      background-color: #1c2541;
+      border: 1px solid #3a506b;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+    label { display: block; font-size: 14px; color: #a9bcd0; margin-bottom: 5px; }
+    select, button {
+      width: 100%; padding: 10px; border-radius: 6px;
+      border: 1px solid #3a506b; background-color: #0b132b; color: white; font-size: 15px;
+    }
+    button.launch-btn { background-color: #3a86ff; border: none; font-weight: bold; cursor: pointer; }
+    .space-stage {
+      background-color: #050814; border-radius: 8px; height: 150px;
+      position: relative; overflow: hidden; display: flex; align-items: center; padding: 0 30px;
+    }
+    .rocket { font-size: 36px; position: absolute; left: 30px; transition: left 2s ease-in-out; }
+    .planet { font-size: 46px; position: absolute; right: 30px; }
+    .hazard-box {
+      display: none; background-color: #5c1919; border: 2px solid #ff4d4d;
+      padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center;
+    }
+    .hazard-actions { display: flex; gap: 10px; margin-top: 10px; }
+    .hazard-actions button { background-color: #ff4d4d; border: none; cursor: pointer; font-weight: bold; }
+    .hazard-actions button.alt { background-color: #fca311; color: #000; }
+    .status-banner { text-align: center; margin-top: 15px; }
+    .success-text { color: #4cc9f0; font-size: 20px; font-weight: bold; }
+    .fail-text { color: #ff4d4d; font-size: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🚀 Space Simulation</h2>
+
+  <div class="card">
+    <div class="controls">
+      <div>
+        <label>Destination</label>
+        <select id="destination" onchange="updatePlanetInfo()">
+          <option value="earth">Earth Orbit (Easy)</option>
+          <option value="moon">The Moon (Medium)</option>
+          <option value="mars">Mars (Hard)</option>
+        </select>
+      </div>
+      <div>
+        <label>Rocket</label>
+        <select id="rocket">
+          <option value="explorer">Explorer Rocket (Standard)</option>
+          <option value="heavy">Titan Heavy (Extra Fuel)</option>
+        </select>
+      </div>
+    </div>
+    <button class="launch-btn" onclick="startMission()">Launch Mission</button>
+  </div>
+
+  <div class="card">
+    <div class="space-stage">
+      <div id="rocketIcon" class="rocket">🚀</div>
+      <div id="planetIcon" class="planet">🌍</div>
+    </div>
+
+    <div id="hazardBox" class="hazard-box">
+      <strong>⚠️ ASTEROID FIELD AHEAD!</strong>
+      <p>Choose quickly:</p>
+      <div class="hazard-actions">
+        <button onclick="resolveHazard('dodge')">Dodge (+20% Fuel)</button>
+        <button class="alt" onclick="resolveHazard('shield')">Use Shields (50% Risk)</button>
+      </div>
+    </div>
+
+    <div id="resultArea" class="status-banner">
+      <p>Select your options above and click <strong>Launch Mission</strong>.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📡 Mission Information</h3>
+    <p id="planetDetails"></p>
+  </div>
+</div>
+
+<script>
+  const planetData = {
+    earth: { name: "Earth Orbit", icon: "🌍", baseFuel: 40, points: 150, info: "Distance: 400 km | Speed: 28,000 km/h | Fact: Home to the International Space Station." },
+    moon: { name: "The Moon", icon: "🌕", baseFuel: 70, points: 300, info: "Distance: 384,400 km | Gravity: 1/6th of Earth | Fact: Takes about 3 days to reach." },
+    mars: { name: "Mars", icon: "🔴", baseFuel: 95, points: 500, info: "Distance: ~225 Million km | Gravity: 3.71 m/s² | Fact: Has the largest volcano in the solar system." }
+  };
+
+  let currentFuelUsed = 0;
+  let missionActive = false;
+
+  function updatePlanetInfo() {
+    const dest = document.getElementById("destination").value;
+    document.getElementById("planetIcon").textContent = planetData[dest].icon;
+    document.getElementById("planetDetails").textContent = planetData[dest].info;
+  }
+
+  function startMission() {
+    if (missionActive) return;
+    missionActive = true;
+
+    const dest = document.getElementById("destination").value;
+    const rocket = document.getElementById("rocket").value;
+    const rocketEl = document.getElementById("rocketIcon");
+
+    document.getElementById("hazardBox").style.display = "none";
+    rocketEl.style.transition = "none";
+    rocketEl.style.left = "30px";
+    document.getElementById("resultArea").innerHTML = "<p>🚀 Launching toward " + planetData[dest].name + "...</p>";
+
+    currentFuelUsed = planetData[dest].baseFuel - (rocket === "heavy" ? 20 : 0);
+
+    setTimeout(() => {
+      rocketEl.style.transition = "left 2s ease-in-out";
+      rocketEl.style.left = "45%";
+    }, 100);
+
+    setTimeout(() => {
+      document.getElementById("hazardBox").style.display = "block";
+      document.getElementById("resultArea").innerHTML = "<p>⚠️ Respond to the hazard above!</p>";
+    }, 2100);
+  }
+
+  function resolveHazard(choice) {
+    document.getElementById("hazardBox").style.display = "none";
+    if (choice === "dodge") {
+      currentFuelUsed += 20;
+      finishMission(true, "Dodged asteroids safely.");
+    } else {
+      const survived = Math.random() > 0.5;
+      finishMission(survived, survived ? "Shields blocked the asteroids!" : "Shields failed! Hull damaged.");
+    }
+  }
+
+  function finishMission(survived, note) {
+    const dest = document.getElementById("destination").value;
+    const rocketEl = document.getElementById("rocketIcon");
+    const resultEl = document.getElementById("resultArea");
+
+    if (!survived || currentFuelUsed > 100) {
+      const reason = currentFuelUsed > 100 ? "Ran out of fuel!" : note;
+      resultEl.innerHTML = `<div class="fail-text">💥 MISSION FAILED</div><p>${reason}</p>`;
+      missionActive = false;
+      return;
+    }
+
+    rocketEl.style.left = "calc(100% - 110px)";
+    setTimeout(() => {
+      resultEl.innerHTML = `
+        <div class="success-text">🎉 MISSION SUCCESSFUL!</div>
+        <p><strong>Destination:</strong> ${planetData[dest].name} | <strong>Fuel Used:</strong> ${currentFuelUsed}%</p>
+        <p>${note}</p>
+        <p>⭐ <strong>Points Earned:</strong> ${planetData[dest].points}</p>
+      `;
+      missionActive = false;
+    }, 2000);
+  }
+
+  updatePlanetInfo();
+</script>
+
+</body>
+</html>
