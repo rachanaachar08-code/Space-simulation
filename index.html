@@ -238,9 +238,7 @@
         astronaut.visible = false;
         rocket.rotation.x = -Math.PI / 2; // Point rocket into deep space
         gameState = "FLYING";
-Use code with caution.
-document.getElementById("phaseText").innerHTML = "Phase 2: Pilot Rocket to Moon 🌕";
-}
+      }
 }
 else if (gameState === "FLYING") {
 // Forward travel through space
@@ -253,7 +251,7 @@ camera.position.set(rocket.position.x * 0.7, rocket.position.y + 5, rocket.posit
 camera.lookAt(rocket.position.x, rocket.position.y, rocket.position.z - 20);
 // Update Distance & Radar Map
 const dist = Math.max(0, Math.floor(Math.abs(moon.position.z - rocket.position.z) - 32));
-document.getElementById("distText").textContent = Distance to Moon: ${dist} km;
+document.getElementById("distText").textContent = "Distance to Moon: "+ dist +"km";
 const progress = Math.min(1, Math.abs(rocket.position.z) / 968);
 document.getElementById("radarPlayer").style.bottom = (15 + progress * 90) + "px";
 document.getElementById("radarPlayer").style.left = (61 + (rocket.position.x / 25) * 40) + "px";
@@ -264,7 +262,7 @@ if (h.userData.isAlien) h.position.x += Math.sin(Date.now() * 0.003 + h.position
 if (h.visible && rocket.position.distanceTo(h.position) < 3.6) {
 h.visible = false;
 health -= 25;
-document.getElementById("hpText").textContent = Hull Integrity: ${health}%;
+document.getElementById("hpText").textContent = "Hull Integrity: "+health+"%";
 if (health <= 0) endGame(false, "Your rocket was destroyed by space stones and aliens!");
 }
 });
@@ -287,13 +285,3 @@ init3D();
 
 
 
-### How It Works & How to Update
-1. **Phase 1 (Board the Rocket):** You start on a 3D launchpad as a spaceman. Press **▲** (or the Up arrow key) to walk forward and sit inside the rocket.
-2. **Phase 2 (3D Galaxy Flight):** Once inside, the rocket launches into deep space past **Earth**, **Saturn**, and glowing **galaxy stars**.
-3. **Radar Map & Obstacles:** Use the circular **Radar Map** in the top-right corner to track your path to the **Moon** while steering (**◀ ▶ ▲ ▼**) to escape incoming **space stones** and **alien UFOs**.
-4. **Update Your App:** Paste this code into **`index.html`** on GitHub (`://github.com`), click **Commit changes**, wait 1 minute, and refresh your desktop app or your friend's phone!
-
-<FollowUp>
-Would you like to add **laser shooting to destroy the alien UFOs** or **customize the planets and speed** in this 3D game?
-</FollowUp>
-<ActionUnit query="threejs 3d space game tutorial html" placement="bottom" />
