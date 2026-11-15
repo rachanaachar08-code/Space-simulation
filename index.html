@@ -1,272 +1,93 @@
+html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>3D Moon Mission</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body { overflow: hidden; background: #02040c; font-family: Arial, sans-serif; color: white; }
-    canvas { display: block; width: 100vw; height: 100vh; }
-    #hud {
-      position: absolute; top: 15px; left: 15px; right: 15px;
-      display: flex; justify-content: space-between; pointer-events: none; z-index: 10;
-    }
-    .panel {
-      background: rgba(11, 19, 43, 0.85); border: 1px solid #3a86ff;
-      padding: 12px 16px; border-radius: 10px; font-size: 14px;
-    }
-    #radarBox {
-      width: 110px; height: 110px; border-radius: 50%;
-      background: rgba(5, 20, 40, 0.9); border: 2px solid #4cc9f0; position: relative;
-    }
-    #radarMoon {
-      width: 12px; height: 12px; background: #ffd166; border-radius: 50%;
-      position: absolute; top: 10px; left: 49px; box-shadow: 0 0 8px #ffd166;
-    }
-    #radarPlayer {
-      width: 8px; height: 8px; background: #00f5d4; border-radius: 50%;
-      position: absolute; bottom: 12px; left: 51px;
-    }
-    #controls {
-      position: absolute; bottom: 25px; left: 20px; right: 20px;
-      display: flex; justify-content: space-between; z-index: 15;
-    }
-    .btn-group { display: flex; gap: 10px; }
-    button.ctrl {
-      width: 60px; height: 60px; border-radius: 50%;
-      background: rgba(58, 134, 255, 0.5); border: 2px solid #4cc9f0;
-      color: white; font-size: 22px; font-weight: bold; touch-action: manipulation;
-    }
-    button.ctrl:active { background: #3a86ff; }
-    #overlay {
-      position: absolute; inset: 0; background: rgba(5, 8, 20, 0.92);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; padding: 25px; z-index: 30;
-    }
-    #overlay h1 { color: #4cc9f0; font-size: 28px; margin-bottom: 12px; }
-    #overlay p { color: #a9bcd0; max-width: 420px; margin-bottom: 22px; line-height: 1.5; }
-    #startBtn {
-      background: #3a86ff; border: none; padding: 15px 34px;
-      font-size: 18px; font-weight: bold; color: white; border-radius: 8px; cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>3D Moon Mission</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none}
+body{overflow:hidden;background:#02040c;font-family:Arial,sans-serif;color:#fff}
+canvas{display:block;width:100vw;height:100vh}
+#hud{position:absolute;top:15px;left:15px;right:15px;display:flex;justify-content:space-between;pointer-events:none;z-index:10}
+.panel{background:rgba(11,19,43,.85);border:1px solid #3a86ff;padding:10px 14px;border-radius:10px;font-size:14px}
+#radar{width:100px;height:100px;border-radius:50%;background:rgba(5,20,40,.9);border:2px solid #4cc9f0;position:relative}
+#rMoon{width:10px;height:10px;background:#ffd166;border-radius:50%;position:absolute;top:8px;left:45px}
+#rShip{width:8px;height:8px;background:#00f5d4;border-radius:50%;position:absolute;bottom:10px;left:46px}
+#ctrls{position:absolute;bottom:20px;left:20px;right:20px;display:flex;justify-content:space-between;z-index:15}
+.grp{display:flex;gap:10px}
+button.c{width:58px;height:58px;border-radius:50%;background:rgba(58,134,255,.5);border:2px solid #4cc9f0;color:#fff;font-size:20px;font-weight:bold}
+#ov{position:absolute;inset:0;background:rgba(5,8,20,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:30}
+#ov h1{color:#4cc9f0;font-size:26px;margin-bottom:10px}
+#ov p{color:#a9bcd0;max-width:400px;margin-bottom:20px;line-height:1.4}
+#btn{background:#3a86ff;border:none;padding:14px 30px;font-size:18px;font-weight:bold;color:#fff;border-radius:8px;cursor:pointer}
+</style>
 </head>
 <body>
-
 <div id="hud">
   <div class="panel">
-    <div id="phaseText"><strong>Phase 1:</strong> Walk to the Rocket 🚀</div>
-    <div id="distText" style="color:#4cc9f0; margin-top:4px;">Distance to Moon: 1000 km</div>
-    <div id="hpText" style="color:#ff4d4d; margin-top:4px;">Hull Integrity: 100%</div>
+    <div id="ph"><strong>Phase 1:</strong> Walk to Rocket 🚀</div>
+    <div id="dt" style="color:#4cc9f0;margin-top:4px">Moon: 1000 km</div>
+    <div id="hp" style="color:#ff4d4d;margin-top:4px">Hull: 100%</div>
   </div>
-  <div id="radarBox">
-    <div id="radarMoon"></div>
-    <div id="radarPlayer"></div>
-  </div>
+  <div id="radar"><div id="rMoon"></div><div id="rShip"></div></div>
 </div>
-
-<div id="controls">
-  <div class="btn-group">
-    <button class="ctrl" id="btnLeft">◀</button>
-    <button class="ctrl" id="btnRight">▶</button>
-  </div>
-  <div class="btn-group">
-    <button class="ctrl" id="btnUp">▲</button>
-    <button class="ctrl" id="btnDown">▼</button>
-  </div>
+<div id="ctrls">
+  <div class="grp"><button class="c" id="bL">◀</button><button class="c" id="bR">▶</button></div>
+  <div class="grp"><button class="c" id="bU">▲</button><button class="c" id="bD">▼</button></div>
 </div>
-
-<div id="overlay">
-  <h1 id="ovTitle">🚀 3D Moon Mission</h1>
-  <p id="ovDesc"><strong>Step 1:</strong> Walk your astronaut forward (▲) into the rocket.<br><strong>Step 2:</strong> Fly through the 3D galaxy, follow the radar map, escape stones & aliens, and land on the Moon!</p>
-  <button id="startBtn" onclick="startGame()">START 3D MISSION</button>
+<div id="ov">
+  <h1 id="t1">🚀 3D Moon Mission</h1>
+  <p id="t2">Walk astronaut (▲) to rocket, fly through 3D galaxy, escape stones & aliens, and land on the Moon!</p>
+  <button id="btn" onclick="startGame()">START 3D MISSION</button>
 </div>
-
-<canvas id="gameCanvas"></canvas>
-
+<canvas id="cv"></canvas>
 <script>
-  const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
-  let W, H;
-
-  function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  window.addEventListener("resize", resize);
-  resize();
-
-  let state = "MENU";
-  let health = 100;
-  let dist = 1000;
-  let player = { x: 0, y: 0, z: 100 };
-  let keys = {};
-  let stars = [];
-  let hazards = [];
-
-  for (let i = 0; i < 200; i++) {
-    stars.push({ x: (Math.random() - 0.5) * 2000, y: (Math.random() - 0.5) * 2000, z: Math.random() * 1000 });
-  }
-
-  window.addEventListener("keydown", function(e) { keys[e.key] = true; });
-  window.addEventListener("keyup", function(e) { keys[e.key] = false; });
-
-  function bindBtn(id, k) {
-    const el = document.getElementById(id);
-    el.addEventListener("touchstart", function(e) { e.preventDefault(); keys[k] = true; });
-    el.addEventListener("touchend", function(e) { e.preventDefault(); keys[k] = false; });
-    el.addEventListener("mousedown", function() { keys[k] = true; });
-    el.addEventListener("mouseup", function() { keys[k] = false; });
-  }
-  bindBtn("btnLeft", "ArrowLeft");
-  bindBtn("btnRight", "ArrowRight");
-  bindBtn("btnUp", "ArrowUp");
-  bindBtn("btnDown", "ArrowDown");
-
-  function startGame() {
-    document.getElementById("overlay").style.display = "none";
-    health = 100;
-    dist = 1000;
-    player = { x: 0, y: 120, z: 100 };
-    hazards = [];
-    for (let i = 0; i < 35; i++) {
-      hazards.push({
-        x: (Math.random() - 0.5) * 600,
-        y: (Math.random() - 0.5) * 400,
-        z: 300 + i * 180,
-        type: i % 2 === 0 ? "stone" : "alien"
-      });
+let state="MENU",health=100,dist=1000,px=0,py=0,pz=100,keys={},stars=[],haz=[];
+function startGame(){
+  document.getElementById("ov").style.display="none";
+  health=100;dist=1000;px=0;py=0;pz=100;haz=[];
+  for(let i=0;i<35;i++)haz.push({x:(Math.random()-.5)*600,y:(Math.random()-.5)*400,z:300+i*180,a:i%2===0});
+  state="WALK";
+  document.getElementById("ph").innerHTML="<strong>Phase 1:</strong> Walk to Rocket 🚀";
+  document.getElementById("hp").textContent="Hull: 100%";
+}
+const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+let W,H;function rsz(){W=cv.width=innerWidth;H=cv.height=innerHeight}addEventListener("resize",rsz);rsz();
+for(let i=0;i<180;i++)stars.push({x:(Math.random()-.5)*2000,y:(Math.random()-.5)*2000,z:Math.random()*1000});
+addEventListener("keydown",e=>keys[e.key]=true);addEventListener("keyup",e=>keys[e.key]=false);
+function bind(id,k){const e=document.getElementById(id);e.ontouchstart=v=>{v.preventDefault();keys[k]=true};e.ontouchend=v=>{v.preventDefault();keys[k]=false};e.onmousedown=()=>keys[k]=true;e.onmouseup=()=>keys[k]=false}
+bind("bL","ArrowLeft");bind("bR","ArrowRight");bind("bU","ArrowUp");bind("bD","ArrowDown");
+function proj(x,y,z){const s=350/(350+z);return{x:W/2+x*s,y:H/2+y*s,s:s}}
+function end(w,m){state="END";document.getElementById("t1").textContent=w?"🌕 MOON LANDING!":"💥 MISSION FAILED";document.getElementById("t2").textContent=m;document.getElementById("btn").textContent="PLAY AGAIN";document.getElementById("ov").style.display="flex"}
+function loop(){
+  requestAnimationFrame(loop);ctx.fillStyle="#030614";ctx.fillRect(0,0,W,H);
+  const g=ctx.createRadialGradient(W*.3,H*.3,20,W*.3,H*.3,350);g.addColorStop(0,"rgba(76,201,240,.2)");g.addColorStop(1,"transparent");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#fff";
+  for(let s of stars){if(state==="FLY")s.z-=8;if(s.z<=1)s.z=1000;let p=proj(s.x,s.y,s.z);ctx.fillRect(p.x,p.y,2.5*p.s,2.5*p.s)}
+  if(state==="WALK"){
+    ctx.strokeStyle="#3a506b";ctx.beginPath();ctx.ellipse(W/2,H*.72,200,55,0,0,Math.PI*2);ctx.stroke();
+    let rp=proj(0,20,350);ctx.font=Math.floor(110*rp.s)+"px Arial";ctx.textAlign="center";ctx.fillText("🚀",rp.x,rp.y);
+    if(keys.ArrowUp)pz+=4;if(keys.ArrowDown&&pz>60)pz-=4;if(keys.ArrowLeft)px-=4;if(keys.ArrowRight)px+=4;
+    let ap=proj(px,80,pz);ctx.font=Math.floor(70*ap.s)+"px Arial";ctx.fillText("🧑‍🚀",ap.x,ap.y);
+    if(pz>=320&&Math.abs(px)<60){state="FLY";px=0;py=0;document.getElementById("ph").innerHTML="<strong>Phase 2:</strong> Fly to Moon 🌕"}
+  }else if(state==="FLY"){
+    dist-=1.2;
+    if(keys.ArrowLeft&&px>-280)px-=6;if(keys.ArrowRight&&px<280)px+=6;if(keys.ArrowUp&&py>-180)py-=6;if(keys.ArrowDown&&py<180)py+=6;
+    let ep=proj(-260-px*.3,-90-py*.3,600);ctx.font=Math.floor(110*ep.s)+"px Arial";ctx.fillText("🪐",ep.x,ep.y);
+    let mp=proj(-px*.5,-py*.5,Math.max(50,dist*1.5));ctx.font=Math.floor(150*mp.s)+"px Arial";ctx.fillText("🌕",mp.x,mp.y);
+    for(let h of haz){
+      h.z-=9;if(h.a)h.x+=Math.sin(Date.now()*.004+h.z)*3;
+      if(h.z<10){h.z=1200;h.x=(Math.random()-.5)*600;h.y=(Math.random()-.5)*400}
+      let hp=proj(h.x-px,h.y-py,h.z);ctx.font=Math.floor(60*hp.s)+"px Arial";ctx.fillText(h.a?"🛸":"🪨",hp.x,hp.y);
+      if(h.z<65&&Math.abs(h.x-px)<55&&Math.abs(h.y-py)<55){h.z=1200;health-=25;document.getElementById("hp").textContent="Hull: "+health+"%";if(health<=0)return end(false,"Destroyed by stones & aliens!")}
     }
-    state = "WALKING";
-    document.getElementById("phaseText").innerHTML = "<strong>Phase 1:</strong> Walk to the Rocket 🚀";
-    document.getElementById("hpText").textContent = "Hull Integrity: 100%";
+    ctx.font="60px Arial";ctx.textAlign="center";ctx.fillText("🚀",W/2,H*.78);
+    document.getElementById("dt").textContent="Moon: "+Math.max(0,Math.floor(dist))+" km";
+    let pr=Math.min(1,(1000-dist)/1000);
+    document.getElementById("rShip").style.bottom=(10+pr*70)+"px";document.getElementById("rShip").style.left=(46+(px/280)*32)+"px";
+    if(dist<=0)end(true,"You escaped aliens & stones and landed on the Moon!");
   }
-
-  function endGame(won, msg) {
-    state = "END";
-    document.getElementById("ovTitle").textContent = won ? "🌕 MOON LANDING SUCCESS!" : "💥 MISSION FAILED";
-    document.getElementById("ovDesc").textContent = msg;
-    document.getElementById("startBtn").textContent = "PLAY AGAIN";
-    document.getElementById("overlay").style.display = "flex";
-  }
-
-  function project(x, y, z) {
-    const fov = 350;
-    const scale = fov / (fov + z);
-    return { x: W / 2 + x * scale, y: H / 2 + y * scale, scale: scale };
-  }
-
-  function loop() {
-    requestAnimationFrame(loop);
-    ctx.fillStyle = "#030614";
-    ctx.fillRect(0, 0, W, H);
-
-    // Draw 3D Galaxy Nebula Glow
-    const grad = ctx.createRadialGradient(W * 0.3, H * 0.3, 20, W * 0.3, H * 0.3, 350);
-    grad.addColorStop(0, "rgba(76, 201, 240, 0.18)");
-    grad.addColorStop(0.5, "rgba(114, 9, 183, 0.12)");
-    grad.addColorStop(1, "transparent");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Draw 3D Moving Stars
-    ctx.fillStyle = "#ffffff";
-    for (let i = 0; i < stars.length; i++) {
-      let s = stars[i];
-      if (state === "FLYING") s.z -= 8;
-      if (s.z <= 1) s.z = 1000;
-      let p = project(s.x, s.y, s.z);
-      ctx.fillRect(p.x, p.y, 2.5 * p.scale, 2.5 * p.scale);
-    }
-
-    if (state === "WALKING") {
-      // Draw 3D Launchpad Grid
-      ctx.strokeStyle = "#2b3d54";
-      ctx.beginPath();
-      ctx.ellipse(W / 2, H * 0.72, 220, 60, 0, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Draw Rocket waiting on pad
-      let rp = project(0, 20, 350);
-      ctx.font = Math.floor(110 * rp.scale) + "px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("🚀", rp.x, rp.y);
-
-      // Move Astronaut
-      if (keys["ArrowUp"]) player.z += 4;
-      if (keys["ArrowDown"] && player.z > 60) player.z -= 4;
-      if (keys["ArrowLeft"]) player.x -= 4;
-      if (keys["ArrowRight"]) player.x += 4;
-
-      let ap = project(player.x, 80, player.z);
-      ctx.font = Math.floor(70 * ap.scale) + "px Arial";
-      ctx.fillText("🧑‍🚀", ap.x, ap.y);
-
-      if (player.z >= 320 && Math.abs(player.x) < 60) {
-        state = "FLYING";
-        player.x = 0;
-        player.y = 0;
-        document.getElementById("phaseText").innerHTML = "<strong>Phase 2:</strong> Pilot Rocket to Moon 🌕";
-      }
-    } else if (state === "FLYING") {
-      dist -= 1.2;
-      if (keys["ArrowLeft"] && player.x > -280) player.x -= 6;
-      if (keys["ArrowRight"] && player.x < 280) player.x += 6;
-      if (keys["ArrowUp"] && player.y > -180) player.y -= 6;
-      if (keys["ArrowDown"] && player.y < 180) player.y += 6;
-
-      // Draw Background Planets in 3D perspective
-      let earthP = project(-260 - player.x * 0.3, -90 - player.y * 0.3, 600);
-      ctx.font = Math.floor(120 * earthP.scale) + "px Arial";
-      ctx.fillText("🪐", earthP.x, earthP.y);
-
-      // Draw Destination Moon growing closer
-      let moonZ = Math.max(50, dist * 1.5);
-      let moonP = project(-player.x * 0.5, -player.y * 0.5, moonZ);
-      ctx.font = Math.floor(160 * moonP.scale) + "px Arial";
-      ctx.fillText("🌕", moonP.x, moonP.y);
-
-      // Draw & Move Stones and Alien UFOs
-      for (let i = 0; i < hazards.length; i++) {
-        let h = hazards[i];
-        h.z -= 9;
-        if (h.type === "alien") h.x += Math.sin(Date.now() * 0.004 + i) * 3;
-        if (h.z < 10) {
-          h.z = 1200;
-          h.x = (Math.random() - 0.5) * 600;
-          h.y = (Math.random() - 0.5) * 400;
-        }
-        let hp = project(h.x - player.x, h.y - player.y, h.z);
-        ctx.font = Math.floor(65 * hp.scale) + "px Arial";
-        ctx.fillText(h.type === "alien" ? "🛸" : "🪨", hp.x, hp.y);
-
-        // Collision check
-        if (h.z < 65 && Math.abs(h.x - player.x) < 55 && Math.abs(h.y - player.y) < 55) {
-          h.z = 1200;
-          health -= 25;
-          document.getElementById("hpText").textContent = "Hull Integrity: " + health + "%";
-          if (health <= 0) {
-            endGame(false, "Your rocket was hit by space stones and alien UFOs!");
-            return;
-          }
-        }
-      }
-
-      // Draw Player Rocket in foreground
-      ctx.font = "64px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("🚀", W / 2, H * 0.78);
-
-      // Update HUD & Radar Map
-      document.getElementById("distText").textContent = "Distance to Moon: " + Math.max(0, Math.floor(dist)) + " km";
-      let prog = Math.min(1, (1000 - dist) / 1000);
-      document.getElementById("radarPlayer").style.bottom = (12 + prog * 75) + "px";
-      document.getElementById("radarPlayer").style.left = (51 + (player.x / 280) * 35) + "px";
-
-      if (dist <= 0) 
-      endGame(true, "Congratulations! You successfully landed on the Moon! 🌕");
-    }
-    }
-    
-    loop();
+}
+loop();
+</script>
