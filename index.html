@@ -1,93 +1,193 @@
-html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>3D Moon Mission</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>3D Aerospace Space Program</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;user-select:none}
-body{overflow:hidden;background:#02040c;font-family:Arial,sans-serif;color:#fff}
+body{overflow:hidden;background:#040711;font-family:'Segoe UI',sans-serif;color:#e2e8f0}
 canvas{display:block;width:100vw;height:100vh}
-#hud{position:absolute;top:15px;left:15px;right:15px;display:flex;justify-content:space-between;pointer-events:none;z-index:10}
-.panel{background:rgba(11,19,43,.85);border:1px solid #3a86ff;padding:10px 14px;border-radius:10px;font-size:14px}
-#radar{width:100px;height:100px;border-radius:50%;background:rgba(5,20,40,.9);border:2px solid #4cc9f0;position:relative}
-#rMoon{width:10px;height:10px;background:#ffd166;border-radius:50%;position:absolute;top:8px;left:45px}
-#rShip{width:8px;height:8px;background:#00f5d4;border-radius:50%;position:absolute;bottom:10px;left:46px}
-#ctrls{position:absolute;bottom:20px;left:20px;right:20px;display:flex;justify-content:space-between;z-index:15}
-.grp{display:flex;gap:10px}
-button.c{width:58px;height:58px;border-radius:50%;background:rgba(58,134,255,.5);border:2px solid #4cc9f0;color:#fff;font-size:20px;font-weight:bold}
-#ov{position:absolute;inset:0;background:rgba(5,8,20,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:30}
-#ov h1{color:#4cc9f0;font-size:26px;margin-bottom:10px}
-#ov p{color:#a9bcd0;max-width:400px;margin-bottom:20px;line-height:1.4}
-#btn{background:#3a86ff;border:none;padding:14px 30px;font-size:18px;font-weight:bold;color:#fff;border-radius:8px;cursor:pointer}
+#topBar{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:10;gap:10px;flex-wrap:wrap}
+.telemetry{display:flex;gap:14px;background:rgba(10,17,34,0.88);border:1px solid #1e3a5f;padding:10px 16px;border-radius:8px;pointer-events:auto}
+.metric{display:flex;flex-direction:column}
+.metric span.lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b}
+.metric span.val{font-size:15px;font-weight:700;color:#38bdf8;margin-top:2px}
+#gpsMap{width:155px;height:155px;background:rgba(9,16,32,0.92);border:2px solid #2563eb;border-radius:12px;overflow:hidden}
+#gpsHeader{background:#1d4ed8;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;display:flex;justify-content:space-between}
+#gpsCanvas{width:155px;height:133px;display:block}
+#bottomHud{position:absolute;bottom:18px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;z-index:15}
+.ctrlPad{display:flex;gap:10px;pointer-events:auto}
+button.navBtn{width:56px;height:56px;border-radius:10px;background:rgba(15,23,42,0.85);border:1px solid #38bdf8;color:#38bdf8;font-size:20px;font-weight:bold;cursor:pointer}
+button.navBtn:active{background:#0284c7;color:#fff}
+#speedoBox{width:140px;height:85px;background:rgba(10,17,34,0.9);border:1px solid #1e3a5f;border-radius:10px;padding:8px;text-align:center}
+#speedCanvas{width:120px;height:52px;display:block;margin:0 auto}
+#speedText{font-size:12px;font-weight:700;color:#f8fafc;margin-top:2px}
+#hangarModal{position:absolute;inset:0;background:rgba(4,7,17,0.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:30;text-align:center}
+#hangarModal h1{font-size:24px;color:#38bdf8;margin-bottom:6px}
+#hangarModal p{color:#94a3b8;font-size:13px;max-width:460px;margin-bottom:16px}
+.rocketCards{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;justify-content:center}
+.rCard{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;width:150px;cursor:pointer;text-align:left}
+.rCard.active{border-color:#38bdf8;box-shadow:0 0 15px rgba(56,189,248,0.3)}
+.rCard h3{font-size:14px;color:#f8fafc;margin-bottom:4px}
+.rCard p{font-size:11px;color:#94a3b8;margin-bottom:6px}
+.rCard .tag{font-size:11px;font-weight:700;color:#34d399}
+#launchBtn{background:linear-gradient(135deg,#2563eb,#0284c7);border:none;padding:14px 34px;font-size:16px;font-weight:700;color:#fff;border-radius:8px;cursor:pointer}
 </style>
+<script src="https://unpkg.com"></script>
 </head>
 <body>
-<div id="hud">
-  <div class="panel">
-    <div id="ph"><strong>Phase 1:</strong> Walk to Rocket 🚀</div>
-    <div id="dt" style="color:#4cc9f0;margin-top:4px">Moon: 1000 km</div>
-    <div id="hp" style="color:#ff4d4d;margin-top:4px">Hull: 100%</div>
+<div id="topBar">
+  <div class="telemetry">
+    <div class="metric"><span class="lbl">Mission</span><span class="val" id="lvlVal">LVL 1: ORBIT</span></div>
+    <div class="metric"><span class="lbl">Credits</span><span class="val" id="crVal" style="color:#fbbf24">500 CR</span></div>
+    <div class="metric"><span class="lbl">Hull</span><span class="val" id="hpVal" style="color:#34d399">100%</span></div>
+    <div class="metric"><span class="lbl">Status</span><span class="val" id="stVal">BOARD ROCKET</span></div>
   </div>
-  <div id="radar"><div id="rMoon"></div><div id="rShip"></div></div>
+  <div id="gpsMap"><div id="gpsHeader"><span>NAV ROUTE</span><span id="gpsDist">1000 KM</span></div><canvas id="gpsCanvas" width="155" height="133"></canvas></div>
 </div>
-<div id="ctrls">
-  <div class="grp"><button class="c" id="bL">◀</button><button class="c" id="bR">▶</button></div>
-  <div class="grp"><button class="c" id="bU">▲</button><button class="c" id="bD">▼</button></div>
+<div id="bottomHud">
+  <div class="ctrlPad"><button class="navBtn" id="bL">◀</button><button class="navBtn" id="bR">▶</button></div>
+  <div id="speedoBox"><canvas id="speedCanvas" width="120" height="52"></canvas><div id="speedText">0 m/s</div></div>
+  <div class="ctrlPad"><button class="navBtn" id="bU">▲</button><button class="navBtn" id="bD">▼</button></div>
 </div>
-<div id="ov">
-  <h1 id="t1">🚀 3D Moon Mission</h1>
-  <p id="t2">Walk astronaut (▲) to rocket, fly through 3D galaxy, escape stones & aliens, and land on the Moon!</p>
-  <button id="btn" onclick="startGame()">START 3D MISSION</button>
+<div id="hangarModal">
+  <h1 id="mTitle">AEROSPACE COMMAND HANGAR</h1>
+  <p id="mSub">Select your spacecraft class, walk your astronaut aboard the launchpad tower, and follow the GPS route to the Moon.</p>
+  <div class="rocketCards">
+    <div class="rCard active" id="card0" onclick="selectRocket(0)"><h3>Falcon-1 Scout</h3><p>Speed: 1.0x | Armor: Std</p><div class="tag">UNLOCKED</div></div>
+    <div class="rCard" id="card1" onclick="selectRocket(1)"><h3>Titan-V Heavy</h3><p>Speed: 1.4x | Armor: +50%</p><div class="tag" id="tag1">COST: 500 CR</div></div>
+    <div class="rCard" id="card2" onclick="selectRocket(2)"><h3>Starliner Prime</h3><p>Speed: 1.8x | Armor: +100%</p><div class="tag" id="tag2">COST: 1000 CR</div></div>
+  </div>
+  <button id="launchBtn" onclick="startMission()">ENTER LAUNCHPAD</button>
 </div>
-<canvas id="cv"></canvas>
 <script>
-let state="MENU",health=100,dist=1000,px=0,py=0,pz=100,keys={},stars=[],haz=[];
-function startGame(){
-  document.getElementById("ov").style.display="none";
-  health=100;dist=1000;px=0;py=0;pz=100;haz=[];
-  for(let i=0;i<35;i++)haz.push({x:(Math.random()-.5)*600,y:(Math.random()-.5)*400,z:300+i*180,a:i%2===0});
-  state="WALK";
-  document.getElementById("ph").innerHTML="<strong>Phase 1:</strong> Walk to Rocket 🚀";
-  document.getElementById("hp").textContent="Hull: 100%";
-}
-const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
-let W,H;function rsz(){W=cv.width=innerWidth;H=cv.height=innerHeight}addEventListener("resize",rsz);rsz();
-for(let i=0;i<180;i++)stars.push({x:(Math.random()-.5)*2000,y:(Math.random()-.5)*2000,z:Math.random()*1000});
-addEventListener("keydown",e=>keys[e.key]=true);addEventListener("keyup",e=>keys[e.key]=false);
-function bind(id,k){const e=document.getElementById(id);e.ontouchstart=v=>{v.preventDefault();keys[k]=true};e.ontouchend=v=>{v.preventDefault();keys[k]=false};e.onmousedown=()=>keys[k]=true;e.onmouseup=()=>keys[k]=false}
-bind("bL","ArrowLeft");bind("bR","ArrowRight");bind("bU","ArrowUp");bind("bD","ArrowDown");
-function proj(x,y,z){const s=350/(350+z);return{x:W/2+x*s,y:H/2+y*s,s:s}}
-function end(w,m){state="END";document.getElementById("t1").textContent=w?"🌕 MOON LANDING!":"💥 MISSION FAILED";document.getElementById("t2").textContent=m;document.getElementById("btn").textContent="PLAY AGAIN";document.getElementById("ov").style.display="flex"}
-function loop(){
-  requestAnimationFrame(loop);ctx.fillStyle="#030614";ctx.fillRect(0,0,W,H);
-  const g=ctx.createRadialGradient(W*.3,H*.3,20,W*.3,H*.3,350);g.addColorStop(0,"rgba(76,201,240,.2)");g.addColorStop(1,"transparent");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  ctx.fillStyle="#fff";
-  for(let s of stars){if(state==="FLY")s.z-=8;if(s.z<=1)s.z=1000;let p=proj(s.x,s.y,s.z);ctx.fillRect(p.x,p.y,2.5*p.s,2.5*p.s)}
-  if(state==="WALK"){
-    ctx.strokeStyle="#3a506b";ctx.beginPath();ctx.ellipse(W/2,H*.72,200,55,0,0,Math.PI*2);ctx.stroke();
-    let rp=proj(0,20,350);ctx.font=Math.floor(110*rp.s)+"px Arial";ctx.textAlign="center";ctx.fillText("🚀",rp.x,rp.y);
-    if(keys.ArrowUp)pz+=4;if(keys.ArrowDown&&pz>60)pz-=4;if(keys.ArrowLeft)px-=4;if(keys.ArrowRight)px+=4;
-    let ap=proj(px,80,pz);ctx.font=Math.floor(70*ap.s)+"px Arial";ctx.fillText("🧑‍🚀",ap.x,ap.y);
-    if(pz>=320&&Math.abs(px)<60){state="FLY";px=0;py=0;document.getElementById("ph").innerHTML="<strong>Phase 2:</strong> Fly to Moon 🌕"}
-  }else if(state==="FLY"){
-    dist-=1.2;
-    if(keys.ArrowLeft&&px>-280)px-=6;if(keys.ArrowRight&&px<280)px+=6;if(keys.ArrowUp&&py>-180)py-=6;if(keys.ArrowDown&&py<180)py+=6;
-    let ep=proj(-260-px*.3,-90-py*.3,600);ctx.font=Math.floor(110*ep.s)+"px Arial";ctx.fillText("🪐",ep.x,ep.y);
-    let mp=proj(-px*.5,-py*.5,Math.max(50,dist*1.5));ctx.font=Math.floor(150*mp.s)+"px Arial";ctx.fillText("🌕",mp.x,mp.y);
-    for(let h of haz){
-      h.z-=9;if(h.a)h.x+=Math.sin(Date.now()*.004+h.z)*3;
-      if(h.z<10){h.z=1200;h.x=(Math.random()-.5)*600;h.y=(Math.random()-.5)*400}
-      let hp=proj(h.x-px,h.y-py,h.z);ctx.font=Math.floor(60*hp.s)+"px Arial";ctx.fillText(h.a?"🛸":"🪨",hp.x,hp.y);
-      if(h.z<65&&Math.abs(h.x-px)<55&&Math.abs(h.y-py)<55){h.z=1200;health-=25;document.getElementById("hp").textContent="Hull: "+health+"%";if(health<=0)return end(false,"Destroyed by stones & aliens!")}
-    }
-    ctx.font="60px Arial";ctx.textAlign="center";ctx.fillText("🚀",W/2,H*.78);
-    document.getElementById("dt").textContent="Moon: "+Math.max(0,Math.floor(dist))+" km";
-    let pr=Math.min(1,(1000-dist)/1000);
-    document.getElementById("rShip").style.bottom=(10+pr*70)+"px";document.getElementById("rShip").style.left=(46+(px/280)*32)+"px";
-    if(dist<=0)end(true,"You escaped aliens & stones and landed on the Moon!");
+let scene,camera,renderer,astro,rocketGroup,flameMesh,moonMesh,earthMesh;
+let obstacles=[],keys={},state="HANGAR",level=1,credits=500,selectedRocket=0;
+let unlocked=[true,false,false],health=100,maxHealth=100,speed=0,dist=1000;
+const specs=[{name:"Falcon-1",speed:1.5,hp:100,color:0xf8fafc,boosters:2},{name:"Titan-V",speed:2.1,hp:150,color:0xe2e8f0,boosters:4},{name:"Starliner",speed:2.7,hp:200,color:0x38bdf8,boosters:6}];
+
+function selectRocket(idx){
+  const costs=[0,500,1000];
+  if(!unlocked[idx]){
+    if(credits>=costs[idx]){credits-=costs[idx];unlocked[idx]=true;document.getElementById("crVal").textContent=credits+" CR";document.getElementById("tag"+idx).textContent="UNLOCKED";}
+    else return;
   }
+  selectedRocket=idx;
+  for(let i=0;i<3;i++)document.getElementById("card"+i).classList.toggle("active",i===idx);
+  buildRocketMesh();
 }
-loop();
+
+function initEngine(){
+  scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x040711,0.0014);
+  camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,2500);
+  renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0x475569,1.3));
+  const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(80,120,60);scene.add(sun);
+
+  const sGeo=new THREE.BufferGeometry(),sPos=[];
+  for(let i=0;i<3000;i++)sPos.push((Math.random()-0.5)*2200,(Math.random()-0.5)*2200,-Math.random()*2000+200);
+  sGeo.setAttribute("position",new THREE.Float32BufferAttribute(sPos,3));
+  scene.add(new THREE.Points(sGeo,new THREE.PointsMaterial({size:1.8,color:0xffffff})));
+
+  const pad=new THREE.Mesh(new THREE.BoxGeometry(36,1.5,44),new THREE.MeshStandardMaterial({color:0x334155}));pad.position.set(0,-1.5,-8);scene.add(pad);
+  const tower=new THREE.Mesh(new THREE.BoxGeometry(2.5,18,2.5),new THREE.MeshStandardMaterial({color:0xd97706}));tower.position.set(-5.5,7.5,-16);scene.add(tower);
+
+  astro=new THREE.Group();
+  const sMat=new THREE.MeshStandardMaterial({color:0xf1f5f9}),vMat=new THREE.MeshStandardMaterial({color:0xf59e0b,metalness:0.9,roughness:0.1});
+  const torso=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.2,0.55),sMat);torso.position.y=1.3;
+  const pack=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.9,0.35),new THREE.MeshStandardMaterial({color:0x94a3b8}));pack.position.set(0,1.35,-0.4);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),sMat);head.position.y=2.25;
+  const visor=new THREE.Mesh(new THREE.SphereGeometry(0.38,16,16),vMat);visor.position.set(0,2.25,0.14);
+  const legL=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.16,0.9,12),sMat);legL.position.set(-0.24,0.45,0);
+  const legR=legL.clone();legR.position.x=0.24;
+  astro.add(torso,pack,head,visor,legL,legR);astro.position.set(0,-0.7,6);scene.add(astro);
+
+  rocketGroup=new THREE.Group();scene.add(rocketGroup);buildRocketMesh();
+  earthMesh=new THREE.Mesh(new THREE.SphereGeometry(45,32,32),new THREE.MeshStandardMaterial({color:0x1d4ed8}));earthMesh.position.set(-95,-30,-220);scene.add(earthMesh);
+  const mars=new THREE.Mesh(new THREE.SphereGeometry(32,32,32),new THREE.MeshStandardMaterial({color:0xb45309}));mars.position.set(110,45,-650);scene.add(mars);
+  moonMesh=new THREE.Mesh(new THREE.SphereGeometry(38,32,32),new THREE.MeshStandardMaterial({color:0xcbd5e1}));moonMesh.position.set(0,0,-1200);scene.add(moonMesh);
+
+  addEventListener("keydown",e=>keys[e.key]=true);addEventListener("keyup",e=>keys[e.key]=false);
+  const bind=(id,k)=>{const el=document.getElementById(id);el.ontouchstart=e=>{e.preventDefault();keys[k]=true;};el.ontouchend=e=>{e.preventDefault();keys[k]=false;};el.onmousedown=()=>keys[k]=true;el.onmouseup=()=>keys[k]=false;};
+  bind("bL","ArrowLeft");bind("bR","ArrowRight");bind("bU","ArrowUp");bind("bD","ArrowDown");
+  animate();
+}
+
+function buildRocketMesh(){
+  while(rocketGroup.children.length)rocketGroup.remove(rocketGroup.children[0]);
+  const sp=specs[selectedRocket];
+  const bMat=new THREE.MeshStandardMaterial({color:sp.color,metalness:0.5,roughness:0.3});
+  const dMat=new THREE.MeshStandardMaterial({color:0x1e293b,metalness:0.7});
+  rocketGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.5,9,24),bMat));
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(1.3,3.2,24),new THREE.MeshStandardMaterial({color:0xdc2626}));nose.position.y=6.1;rocketGroup.add(nose);
+  for(let i=0;i<sp.boosters;i++){
+    const a=(i/sp.boosters)*Math.PI*2;
+    const b=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.48,5.5,16),bMat);b.position.set(Math.cos(a)*1.85,-1.5,Math.sin(a)*1.85);rocketGroup.add(b);
+  }
+  flameMesh=new THREE.Mesh(new THREE.ConeGeometry(1.2,4.5,16),new THREE.MeshBasicMaterial({color:0x38bdf8}));
+  flameMesh.rotation.x=Math.PI;flameMesh.position.y=-6.5;flameMesh.visible=false;rocketGroup.add(flameMesh);
+  rocketGroup.position.set(0,4,-16);
+}
+
+function startMission(){
+  document.getElementById("hangarModal").style.display="none";
+  maxHealth=specs[selectedRocket].hp;health=maxHealth;dist=1000+level*200;moonMesh.position.z=-dist-40;
+  astro.visible=true;astro.position.set(0,-0.7,6);rocketGroup.position.set(0,4,-16);rocketGroup.rotation.set(0,0,0);
+  flameMesh.visible=false;speed=0;
+  obstacles.forEach(o=>scene.remove(o));obstacles=[];
+  for(let i=0;i<25+level*10;i++){
+    const isA=i%3===0;
+    const m=isA?new THREE.Mesh(new THREE.TorusGeometry(2.2,0.7,12,24),new THREE.MeshStandardMaterial({color:0x10b981,emissive:0x059669})):new THREE.Mesh(new THREE.DodecahedronGeometry(2.5,1),new THREE.MeshStandardMaterial({color:0x57534e}));
+    if(isA)m.rotation.x=Math.PI/2;
+    m.position.set((Math.random()-0.5)*56,(Math.random()-0.5)*34,-120-i*35);m.userData={isA};scene.add(m);obstacles.push(m);
+  }
+  state="WALK";document.getElementById("lvlVal").textContent="LVL "+level+": MOON";document.getElementById("hpVal").textContent="100%";document.getElementById("stVal").textContent="BOARD ROCKET";
+}
+
+function finishMission(won,msg){
+  state="HANGAR";flameMesh.visible=false;speed=0;
+  if(won){const r=350*level;credits+=r;level++;document.getElementById("crVal").textContent=credits+" CR";document.getElementById("mTitle").textContent="LUNAR LANDING COMPLETE (+"+r+" CR)";document.getElementById("mSub").textContent=msg;}
+  else{document.getElementById("mTitle").textContent="MISSION ABORTED";document.getElementById("mSub").textContent=msg;}
+  document.getElementById("launchBtn").textContent="LAUNCH LEVEL "+level;document.getElementById("hangarModal").style.display="flex";
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  if(state==="WALK"){
+    speed=keys.ArrowUp?4:0;
+    if(keys.ArrowUp)astro.position.z-=0.22;if(keys.ArrowDown&&astro.position.z<10)astro.position.z+=0.22;
+    if(keys.ArrowLeft&&astro.position.x>-12)astro.position.x-=0.22;if(keys.ArrowRight&&astro.position.x<12)astro.position.x+=0.22;
+    camera.position.set(astro.position.x*0.6,astro.position.y+3.5,astro.position.z+9);camera.lookAt(0,3,-16);
+    if(astro.position.distanceTo(new THREE.Vector3(0,-0.7,-14))<3.5){astro.visible=false;rocketGroup.rotation.x=-Math.PI/2;flameMesh.visible=true;state="FLY";document.getElementById("stVal").textContent="IN TRANSIT";}
+  }else if(state==="FLY"){
+    speed=Math.min(3200,speed+18);rocketGroup.position.z-=specs[selectedRocket].speed;
+    dist=Math.max(0,Math.abs(moonMesh.position.z-rocketGroup.position.z)-40);
+    if(keys.ArrowLeft&&rocketGroup.position.x>-26)rocketGroup.position.x-=0.55;if(keys.ArrowRight&&rocketGroup.position.x<26)rocketGroup.position.x+=0.55;
+    if(keys.ArrowUp&&rocketGroup.position.y<16)rocketGroup.position.y+=0.55;if(keys.ArrowDown&&rocketGroup.position.y>-16)rocketGroup.position.y-=0.55;
+    camera.position.set(rocketGroup.position.x*0.75,rocketGroup.position.y+4.5,rocketGroup.position.z+17);camera.lookAt(rocketGroup.position.x,rocketGroup.position.y,rocketGroup.position.z-25);
+    for(let o of obstacles){
+      o.rotation.y+=0.02;if(o.userData.isA)o.position.x+=Math.sin(Date.now()*0.003+o.position.z)*0.18;
+      if(o.visible&&rocketGroup.position.distanceTo(o.position)<3.6){o.visible=false;health-=25;document.getElementById("hpVal").textContent=Math.max(0,Math.floor((health/maxHealth)*100))+"%";if(health<=0)return finishMission(false,"Hull failed from asteroid & alien impacts.");}
+    }
+    if(dist<=5)finishMission(true,"Successful lunar insertion and landing!");
+  }
+  const sc=document.getElementById("speedCanvas").getContext("2d");sc.clearRect(0,0,120,52);
+  sc.beginPath();sc.arc(60,48,38,Math.PI,0);sc.strokeStyle="#1e293b";sc.lineWidth=8;sc.stroke();
+  sc.beginPath();sc.arc(60,48,38,Math.PI,Math.PI+Math.min(1,speed/3200)*Math.PI);sc.strokeStyle="#38bdf8";sc.lineWidth=8;sc.stroke();
+  document.getElementById("speedText").textContent=Math.floor(speed)+" m/s";
+
+  const gc=document.getElementById("gpsCanvas").getContext("2d");gc.fillStyle="#0b1324";gc.fillRect(0,0,155,133);
+  const prog=Math.max(0,Math.min(1,1-(dist/(1000+level*200))));
+  const sx=77+(rocketGroup.position.x/30)*45,sy=115-prog*90;
+  gc.beginPath();gc.moveTo(sx,sy);gc.lineTo(77,18);gc.strokeStyle="#3b82f6";gc.lineWidth=4;gc.stroke();
+  gc.beginPath();gc.arc(77,18,7,0,Math.PI*2);gc.fillStyle="#fbbf24";gc.fill();
+  gc.beginPath();gc.moveTo(sx,sy-7);gc.lineTo(sx-5,sy+5);gc.lineTo(sx+5,sy+5);gc.closePath();gc.fillStyle="#38bdf8";gc.fill();
+  document.getElementById("gpsDist").textContent=Math.max(0,Math.floor(dist))+" KM";
+
+  renderer.render(scene,camera);
+}
+initEngine();
 </script>
+</body>
+</html>
