@@ -1,7 +1,3 @@
-1. corner of the code box to edit it.
-2. Click inside the GitHub editor, press Ctrl + A to select all the broken text, and press Backspace to make it 100% empty.
-3. Copy Part 1 below and paste it into GitHub (Ctrl + V):
-html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,9 +46,9 @@ button.navBtn:active{background:#0284c7;color:#fff}
   <div id="gpsMap"><div id="gpsHeader"><span>NAV ROUTE</span><span id="gpsDist">1000 KM</span></div><canvas id="gpsCanvas" width="155" height="133"></canvas></div>
 </div>
 <div id="bottomHud">
-  <div class="ctrlPad"><button class="navBtn" id="bL">◀</button><button class="navBtn" id="bR">▶</button></div>
+  <div class="ctrlPad"><button class="navBtn" id="bL">&#9664;</button><button class="navBtn" id="bR">&#9654;</button></div>
   <div id="speedoBox"><canvas id="speedCanvas" width="120" height="52"></canvas><div id="speedText">0 m/s</div></div>
-  <div class="ctrlPad"><button class="navBtn" id="bU">▲</button><button class="navBtn" id="bD">▼</button></div>
+  <div class="ctrlPad"><button class="navBtn" id="bU">&#9650;</button><button class="navBtn" id="bD">&#9660;</button></div>
 </div>
 <div id="hangarModal">
   <h1 id="mTitle">AEROSPACE COMMAND HANGAR</h1>
@@ -65,97 +61,127 @@ button.navBtn:active{background:#0284c7;color:#fff}
   <button id="launchBtn" onclick="startMission()">ENTER LAUNCHPAD</button>
 </div>
 <canvas id="cv"></canvas>
-
+<script>
 const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
 let W,H;function rsz(){W=cv.width=innerWidth;H=cv.height=innerHeight;}addEventListener("resize",rsz);rsz();
-let state="HANGAR",level=1,credits=500,selectedRocket=0;
-let unlocked=new Array(true,false,false),health=100,maxHealth=100,speed=0,dist=1000;
-let px=0,py=0,pz=120,keys={},stars=new Array(),hazards=new Array();
-const specs=new Array(
-  {name:"Falcon-1",spd:1.4,hp:100,color:"#f1f5f9",accent:"#dc2626",boosters:2},
-  {name:"Titan-V",spd:1.9,hp:150,color:"#e2e8f0",accent:"#2563eb",boosters:4},
-  {name:"Starliner",spd:2.4,hp:200,color:"#bae6fd",accent:"#0284c7",boosters:6}
-);
-for(let i=0;i<260;i++)stars.push({x:(Math.random()-0.5)*2400,y:(Math.random()-0.5)*2400,z:Math.random()*1200});
+let st="HANGAR",lvl=1,cr=500,sel=0,unl=new Array(true,false,false),hp=100,mHp=100,spd=0,dist=1000,px=0,py=0,pz=120,keys={},stars=new Array(),haz=new Array();
+const sp=new Array({s:1.4,h:100,c:"#f1f5f9",a:"#dc2626",b:2},{s:1.9,h:150,c:"#e2e8f0",a:"#2563eb",b:4},{s:2.4,h:200,c:"#bae6fd",a:"#0284c7",b:6});
+for(let i=0;i<220;i++)stars.push({x:(Math.random()-0.5)*2400,y:(Math.random()-0.5)*2400,z:Math.random()*1200});
 
-function selectRocket(idx){
-  const costs=new Array(0,500,1000);
-  if(!unlocked.at(idx)){
-    if(credits>=costs.at(idx)){credits-=costs.at(idx);unlocked.splice(idx,1,true);document.getElementById("crVal").textContent=credits+" CR";document.getElementById("tag"+idx).textContent="UNLOCKED";}
+function selectRocket(i){
+  const c=new Array(0,500,1000);
+  if(!unl.at(i)){
+    if(cr>=c.at(i)){cr-=c.at(i);unl.splice(i,1,true);document.getElementById("crVal").textContent=cr+" CR";document.getElementById("tag"+i).textContent="UNLOCKED";}
     else return;
   }
-  selectedRocket=idx;
-  for(let i=0;i<3;i++)document.getElementById("card"+i).classList.toggle("active",i===idx);
+  sel=i;for(let k=0;k<3;k++)document.getElementById("card"+k).classList.toggle("active",k===i);
 }
 
 function startMission(){
   document.getElementById("hangarModal").style.display="none";
-  maxHealth=specs.at(selectedRocket).hp;health=maxHealth;dist=1000+level*200;
-  px=0;py=0;pz=110;speed=0;hazards=new Array();
-  for(let i=0;i<30+level*10;i++)hazards.push({x:(Math.random()-0.5)*680,y:(Math.random()-0.5)*420,z:350+i*190,alien:i%3===0});
-  state="WALK";document.getElementById("lvlVal").textContent="LVL "+level+": MOON";document.getElementById("hpVal").textContent="100%";document.getElementById("stVal").textContent="BOARD ROCKET";
+  mHp=sp.at(sel).h;hp=mHp;dist=1000+lvl*200;px=0;py=0;pz=110;spd=0;haz=new Array();
+  for(let i=0;i<25+lvl*10;i++)haz.push({x:(Math.random()-0.5)*680,y:(Math.random()-0.5)*420,z:350+i*190,al:i%3===0});
+  st="WALK";document.getElementById("lvlVal").textContent="LVL "+lvl+": MOON";document.getElementById("hpVal").textContent="100%";document.getElementById("stVal").textContent="BOARD ROCKET";
 }
 
-function finishMission(won,msg){
-  state="HANGAR";speed=0;
-  if(won){const r=350*level;credits+=r;level++;document.getElementById("crVal").textContent=credits+" CR";document.getElementById("mTitle").textContent="LUNAR LANDING COMPLETE (+"+r+" CR)";document.getElementById("mSub").textContent=msg;}
-  else{document.getElementById("mTitle").textContent="MISSION ABORTED";document.getElementById("mSub").textContent=msg;}
-  document.getElementById("launchBtn").textContent="LAUNCH LEVEL "+level;document.getElementById("hangarModal").style.display="flex";
+function endM(w,m){
+  st="HANGAR";spd=0;
+  if(w){const r=350*lvl;cr+=r;lvl++;document.getElementById("crVal").textContent=cr+" CR";document.getElementById("mTitle").textContent="LUNAR LANDING COMPLETE (+"+r+" CR)";document.getElementById("mSub").textContent=m;}
+  else{document.getElementById("mTitle").textContent="MISSION ABORTED";document.getElementById("mSub").textContent=m;}
+  document.getElementById("launchBtn").textContent="LAUNCH LEVEL "+lvl;document.getElementById("hangarModal").style.display="flex";
 }
 
 addEventListener("keydown",e=>keys[e.code]=true);addEventListener("keyup",e=>keys[e.code]=false);
-function bind(id,code){const el=document.getElementById(id);el.ontouchstart=e=>{e.preventDefault();keys[code]=true;};el.ontouchend=e=>{e.preventDefault();keys[code]=false;};el.onmousedown=()=>keys[code]=true;el.onmouseup=()=>keys[code]=false;}
+function bind(id,c){const el=document.getElementById(id);el.ontouchstart=e=>{e.preventDefault();keys[c]=true;};el.ontouchend=e=>{e.preventDefault();keys[c]=false;};el.onmousedown=()=>keys[c]=true;el.onmouseup=()=>keys[c]=false;}
 bind("bL","ArrowLeft");bind("bR","ArrowRight");bind("bU","ArrowUp");bind("bD","ArrowDown");
 function proj(x,y,z){const s=380/(380+z);return{x:W/2+x*s,y:H/2+y*s,s:s};}
 
-function draw3DRocket(cx,cy,sc,flying){
-  const sp=specs.at(selectedRocket);ctx.save();ctx.translate(cx,cy);ctx.scale(sc,sc);
-  if(flying){const fl=45+Math.random()*25,fg=ctx.createLinearGradient(0,55,0,55+fl);fg.addColorStop(0,"#fff");fg.addColorStop(0.3,"#38bdf8");fg.addColorStop(1,"transparent");ctx.fillStyle=fg;ctx.beginPath();ctx.moveTo(-14,55);ctx.lineTo(0,55+fl);ctx.lineTo(14,55);ctx.fill();}
-  const bCount=sp.boosters>=4?2:1;
-  for(let side of new Array(-1,1)){for(let k=0;k<bCount;k++){const bx=side*(24+k*12),bg=ctx.createLinearGradient(bx-7,0,bx+7,0);bg.addColorStop(0,"#64748b");bg.addColorStop(0.4,sp.color);bg.addColorStop(1,"#334155");ctx.fillStyle=bg;ctx.fillRect(bx-6,-15,12,68);ctx.fillStyle=sp.accent;ctx.beginPath();ctx.moveTo(bx-6,-15);ctx.lineTo(bx,-32);ctx.lineTo(bx+6,-15);ctx.fill();}}
-  const mg=ctx.createLinearGradient(-18,0,18,0);mg.addColorStop(0,"#475569");mg.addColorStop(0.35,sp.color);mg.addColorStop(0.75,"#cbd5e1");mg.addColorStop(1,"#1e293b");ctx.fillStyle=mg;ctx.fillRect(-16,-55,32,110);
-  ctx.fillStyle="#0f172a";ctx.fillRect(-16,-25,32,8);ctx.beginPath();ctx.arc(0,-5,6,0,Math.PI*2);ctx.fillStyle="#38bdf8";ctx.fill();
-  ctx.fillStyle=sp.accent;ctx.beginPath();ctx.moveTo(-16,-55);ctx.lineTo(0,-92);ctx.lineTo(16,-55);ctx.fill();ctx.restore();
+function rocket(cx,cy,sc,fl){
+  const r=sp.at(sel);ctx.save();ctx.translate(cx,cy);ctx.scale(sc,sc);
+  if(fl){const f=45+Math.random()*25,g=ctx.createLinearGradient(0,55,0,55+f);g.addColorStop(0,"#fff");g.addColorStop(0.3,"#38bdf8");g.addColorStop(1,"transparent");ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-14,55);ctx.lineTo(0,55+f);ctx.lineTo(14,55);ctx.fill();}
+  const bc=r.b>=4?2:1;
+  for(let sd of new Array(-1,1))for(let k=0;k<bc;k++){const bx=sd*(24+k*12);ctx.fillStyle="#64748b";ctx.fillRect(bx-6,-15,12,68);ctx.fillStyle=r.a;ctx.beginPath();ctx.moveTo(bx-6,-15);ctx.lineTo(bx,-32);ctx.lineTo(bx+6,-15);ctx.fill();}
+  const mg=ctx.createLinearGradient(-18,0,18,0);mg.addColorStop(0,"#475569");mg.addColorStop(0.4,r.c);mg.addColorStop(1,"#1e293b");ctx.fillStyle=mg;ctx.fillRect(-16,-55,32,110);
+  ctx.fillStyle=r.a;ctx.beginPath();ctx.moveTo(-16,-55);ctx.lineTo(0,-92);ctx.lineTo(16,-55);ctx.fill();ctx.restore();
 }
 
-function draw3DAstronaut(cx,cy,sc,walkStep){
-  ctx.save();ctx.translate(cx,cy);ctx.scale(sc,sc);const sw=Math.sin(walkStep)*6;
+function astro(cx,cy,sc,w){
+  ctx.save();ctx.translate(cx,cy);ctx.scale(sc,sc);const sw=Math.sin(w)*6;
   ctx.fillStyle="#94a3b8";ctx.fillRect(-14,-36,28,32);ctx.fillStyle="#cbd5e1";ctx.fillRect(-10,-8,8,24+sw);ctx.fillRect(2,-8,8,24-sw);
-  const sg=ctx.createLinearGradient(-12,0,12,0);sg.addColorStop(0,"#94a3b8");sg.addColorStop(0.5,"#f8fafc");sg.addColorStop(1,"#64748b");ctx.fillStyle=sg;ctx.fillRect(-12,-38,24,32);
-  ctx.beginPath();ctx.arc(0,-48,13,0,Math.PI*2);ctx.fillStyle="#f8fafc";ctx.fill();
-  const vg=ctx.createLinearGradient(-8,-54,8,-42);vg.addColorStop(0,"#fef08a");vg.addColorStop(0.5,"#f59e0b");vg.addColorStop(1,"#b45309");ctx.beginPath();ctx.ellipse(0,-48,9,7,0,0,Math.PI*2);ctx.fillStyle=vg;ctx.fill();ctx.restore();
+  ctx.fillStyle="#f8fafc";ctx.fillRect(-12,-38,24,32);ctx.beginPath();ctx.arc(0,-48,13,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#f59e0b";ctx.beginPath();ctx.ellipse(0,-48,9,7,0,0,Math.PI*2);ctx.fill();ctx.restore();
 }
 
-function loop(){
-  requestAnimationFrame(loop);ctx.fillStyle="#040711";ctx.fillRect(0,0,W,H);
-  const neb=ctx.createRadialGradient(W*0.28,H*0.32,20,W*0.28,H*0.32,420);neb.addColorStop(0,"rgba(37,99,235,0.16)");neb.addColorStop(1,"transparent");ctx.fillStyle=neb;ctx.fillRect(0,0,W,H);
+ loop()
+ function loop(){
+  requestAnimationFrame(loop);
+  ctx.fillStyle="#040711";ctx.fillRect(0,0,W,H);
   ctx.fillStyle="#e2e8f0";
-  for(let s of stars){if(state==="FLY")s.z-=9*specs.at(selectedRocket).spd;if(s.z<=1)s.z=1200;const p=proj(s.x,s.y,s.z);ctx.fillRect(p.x,p.y,2.2*p.s,2.2*p.s);}
-  if(state==="WALK"){
-    const padP=proj(0,85,340);ctx.fillStyle="#1e293b";ctx.beginPath();ctx.ellipse(padP.x,padP.y,260*padP.s,65*padP.s,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#38bdf8";ctx.lineWidth=2;ctx.stroke();
-    ctx.strokeStyle="#d97706";ctx.lineWidth=4*padP.s;ctx.strokeRect(padP.x-75*padP.s,padP.y-170*padP.s,26*padP.s,170*padP.s);
-    const rp=proj(0,15,350);draw3DRocket(rp.x,rp.y,rp.s*1.5,false);
-    speed=keys.ArrowUp?4:0;if(keys.ArrowUp)pz+=3.5;if(keys.ArrowDown&&pz>70)pz-=3.5;if(keys.ArrowLeft&&px>-140)px-=3.5;if(keys.ArrowRight&&px<140)px+=3.5;
-    const ap=proj(px,75,pz);draw3DAstronaut(ap.x,ap.y,ap.s*1.2,pz*0.15);
-    if(pz>=315&&Math.abs(px)<55){state="FLY";px=0;py=0;document.getElementById("stVal").textContent="IN TRANSIT";}
-  }else if(state==="FLY"){
-    const sp=specs.at(selectedRocket).spd;speed=Math.min(3200,speed+18);dist-=1.3*sp;
-    if(keys.ArrowLeft&&px>-290)px-=6;if(keys.ArrowRight&&px<290)px+=6;if(keys.ArrowUp&&py>-180)py-=6;if(keys.ArrowDown&&py<180)py+=6;
-    const plP=proj(-280-px*0.25,-95-py*0.25,650),pg=ctx.createRadialGradient(plP.x-15*plP.s,plP.y-15*plP.s,5,plP.x,plP.y,65*plP.s);pg.addColorStop(0,"#fb923c");pg.addColorStop(1,"#1c1917");ctx.fillStyle=pg;ctx.beginPath();ctx.arc(plP.x,plP.y,65*plP.s,0,Math.PI*2);ctx.fill();
-    const mz=Math.max(60,dist*1.4),mp=proj(-px*0.45,-py*0.45,mz),mr=95*mp.s,mg=ctx.createRadialGradient(mp.x-mr*0.3,mp.y-mr*0.3,mr*0.1,mp.x,mp.y,mr);mg.addColorStop(0,"#f8fafc");mg.addColorStop(1,"#1e293b");ctx.fillStyle=mg;ctx.beginPath();ctx.arc(mp.x,mp.y,mr,0,Math.PI*2);ctx.fill();
-    for(let h of hazards){
-      h.z-=9.5*sp;if(h.alien)h.x+=Math.sin(Date.now()*0.004+h.z)*3.2;if(h.z<10){h.z=1250;h.x=(Math.random()-0.5)*680;h.y=(Math.random()-0.5)*420;}
-      const hp=proj(h.x-px,h.y-py,h.z),rad=26*hp.s;
-      if(h.alien){ctx.fillStyle="#334155";ctx.beginPath();ctx.ellipse(hp.x,hp.y,rad*1.4,rad*0.45,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#10b981";ctx.beginPath();ctx.arc(hp.x,hp.y-rad*0.25,rad*0.55,Math.PI,0);ctx.fill();}
-      else{const ag=ctx.createRadialGradient(hp.x-rad*0.3,hp.y-rad*0.3,2,hp.x,hp.y,rad);ag.addColorStop(0,"#a8a29e");ag.addColorStop(1,"#1c1917");ctx.fillStyle=ag;ctx.beginPath();ctx.arc(hp.x,hp.y,rad,0,Math.PI*2);ctx.fill();}
-      if(h.z<65&&Math.abs(h.x-px)<52&&Math.abs(h.y-py)<52){h.z=1250;health-=25;document.getElementById("hpVal").textContent=Math.max(0,Math.floor((health/maxHealth)*100))+"%";if(health<=0)return finishMission(false,"Hull integrity failed from asteroid and alien impacts.");}
-    }
-    draw3DRocket(W/2,H*0.76,1.15,true);if(dist<=0)finishMission(true,"Successful lunar insertion and landing!");
+  for(let s of stars){
+    if(st==="FLY")s.z-=9*sp.at(sel).s;
+    if(s.z<=1)s.z=1200;
+    const p=proj(s.x,s.y,s.z);
+    ctx.fillRect(p.x,p.y,2.2*p.s,2.2*p.s);
   }
-  const sc=document.getElementById("speedCanvas").getContext("2d");sc.clearRect(0,0,120,52);sc.beginPath();sc.arc(60,48,38,Math.PI,0);sc.strokeStyle="#1e293b";sc.lineWidth=8;sc.stroke();sc.beginPath();sc.arc(60,48,38,Math.PI,Math.PI+Math.min(1,speed/3200)*Math.PI);sc.strokeStyle="#38bdf8";sc.lineWidth=8;sc.stroke();document.getElementById("speedText").textContent=Math.floor(speed)+" m/s";
-  const gc=document.getElementById("gpsCanvas").getContext("2d");gc.fillStyle="#0b1324";gc.fillRect(0,0,155,133);const prog=Math.max(0,Math.min(1,1-(dist/(1000+level*200)))),sx=77+(px/300)*45,sy=115-prog*90;gc.beginPath();gc.moveTo(sx,sy);gc.lineTo(77,18);gc.strokeStyle="#3b82f6";gc.lineWidth=4;gc.stroke();gc.beginPath();gc.arc(77,18,7,0,Math.PI*2);gc.fillStyle="#fbbf24";gc.fill();gc.beginPath();gc.moveTo(sx,sy-7);gc.lineTo(sx-5,sy+5);gc.lineTo(sx+5,sy+5);gc.closePath();gc.fillStyle="#38bdf8";gc.fill();document.getElementById("gpsDist").textContent=Math.max(0,Math.floor(dist))+" KM";
+  if(st==="WALK"){
+    const pp=proj(0,85,340);
+    ctx.fillStyle="#1e293b";ctx.beginPath();ctx.ellipse(pp.x,pp.y,260*pp.s,65*pp.s,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle="#38bdf8";ctx.stroke();
+    ctx.strokeStyle="#d97706";ctx.strokeRect(pp.x-75*pp.s,pp.y-170*pp.s,26*pp.s,170*pp.s);
+    const rp=proj(0,15,350);rocket(rp.x,rp.y,rp.s*1.5,false);
+    spd=keys.ArrowUp?4:0;
+    if(keys.ArrowUp)pz+=3.5;
+    if(keys.ArrowDown&&pz>70)pz-=3.5;
+    if(keys.ArrowLeft&&px>-140)px-=3.5;
+    if(keys.ArrowRight&&px<140)px+=3.5;
+    const ap=proj(px,75,pz);astro(ap.x,ap.y,ap.s*1.2,pz*0.15);
+    if(pz>=315&&Math.abs(px)<55){
+      st="FLY";px=0;py=0;
+      document.getElementById("stVal").textContent="IN TRANSIT";
+    }
+  }else if(st==="FLY"){
+    const v=sp.at(sel).s;
+    spd=Math.min(3200,spd+18);
+    dist-=1.3*v;
+    if(keys.ArrowLeft&&px>-290)px-=6;
+    if(keys.ArrowRight&&px<290)px+=6;
+    if(keys.ArrowUp&&py>-180)py-=6;
+    if(keys.ArrowDown&&py<180)py+=6;
+    const pl=proj(-280-px*0.25,-95-py*0.25,650);
+    ctx.fillStyle="#c2410c";ctx.beginPath();ctx.arc(pl.x,pl.y,65*pl.s,0,Math.PI*2);ctx.fill();
+    const mp=proj(-px*0.45,-py*0.45,Math.max(60,dist*1.4));
+    const mr=95*mp.s;
+    ctx.fillStyle="#cbd5e1";ctx.beginPath();ctx.arc(mp.x,mp.y,mr,0,Math.PI*2);ctx.fill();
+    for(let h of haz){
+      h.z-=9.5*v;
+      if(h.al)h.x+=Math.sin(Date.now()*0.004+h.z)*3.2;
+      if(h.z<10){h.z=1250;h.x=(Math.random()-0.5)*680;h.y=(Math.random()-0.5)*420;}
+      const hp=proj(h.x-px,h.y-py,h.z);
+      const rad=26*hp.s;
+      ctx.fillStyle=h.al?"#10b981":"#78716c";
+      ctx.beginPath();ctx.arc(hp.x,hp.y,rad,0,Math.PI*2);ctx.fill();
+      if(h.z<65&&Math.abs(h.x-px)<52&&Math.abs(h.y-py)<52){
+        h.z=1250;hp-=25;
+        document.getElementById("hpVal").textContent=Math.max(0,Math.floor((hp/mHp)*100))+"%";
+        if(hp<=0)return endM(false,"Hull failed from impacts.");
+      }
+    }
+    rocket(W/2,H*0.76,1.15,true);
+    if(dist<=0)endM(true,"Successful lunar landing!");
+  }
+  const sc=document.getElementById("speedCanvas").getContext("2d");
+  sc.clearRect(0,0,120,52);
+  sc.beginPath();sc.arc(60,48,38,Math.PI,0);sc.strokeStyle="#1e293b";sc.lineWidth=8;sc.stroke();
+  sc.beginPath();sc.arc(60,48,38,Math.PI,Math.PI+Math.min(1,spd/3200)*Math.PI);sc.strokeStyle="#38bdf8";sc.lineWidth=8;sc.stroke();
+  document.getElementById("speedText").textContent=Math.floor(spd)+" m/s";
+
+  const gc=document.getElementById("gpsCanvas").getContext("2d");
+  gc.fillStyle="#0b1324";gc.fillRect(0,0,155,133);
+  const pr=Math.max(0,Math.min(1,1-(dist/(1000+lvl*200))));
+  const sx=77+(px/300)*45,sy=115-pr*90;
+  gc.beginPath();gc.moveTo(sx,sy);gc.lineTo(77,18);gc.strokeStyle="#3b82f6";gc.lineWidth=4;gc.stroke();
+  gc.beginPath();gc.arc(77,18,7,0,Math.PI*2);gc.fillStyle="#fbbf24";gc.fill();
+  gc.beginPath();gc.moveTo(sx,sy-7);gc.lineTo(sx-5,sy+5);gc.lineTo(sx+5,sy+5);gc.closePath();gc.fillStyle="#38bdf8";gc.fill();
+  document.getElementById("gpsDist").textContent=Math.max(0,Math.floor(dist))+" KM";
 }
-      loop();
-    </script>
-    </body>
-      </html>
+  
