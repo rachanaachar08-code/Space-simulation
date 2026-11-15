@@ -3,291 +3,297 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Space Shooter & Coin Runner</title>
+  <title>3D Moon Mission Adventure</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body {
-      background-color: #050814;
-      color: #ffffff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
-    }
+    body { overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
     #hud {
-      position: absolute;
-      top: 15px;
-      width: 92%;
-      max-width: 500px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 16px;
-      font-weight: bold;
-      z-index: 10;
-      background: rgba(28, 37, 65, 0.8);
-      padding: 10px 15px;
-      border-radius: 10px;
-      border: 1px solid #3a506b;
+      position: absolute; top: 15px; left: 15px; right: 15px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      pointer-events: none; z-index: 10;
     }
-    .coin-text { color: #ffd166; }
-    .dist-text { color: #4cc9f0; }
-    .hp-text { color: #ff4d4d; }
-    canvas {
-      background: radial-gradient(circle at center, #0b132b 0%, #02040a 100%);
-      border: 2px solid #3a506b;
-      border-radius: 10px;
-      max-width: 100%;
-      max-height: 100%;
-      touch-action: none;
+    .panel {
+      background: rgba(11, 19, 43, 0.85); border: 1px solid #3a86ff;
+      padding: 12px 16px; border-radius: 10px; font-size: 14px;
     }
+    #radarBox {
+      width: 130px; height: 130px; border-radius: 50%;
+      background: rgba(5, 20, 40, 0.9); border: 2px solid #4cc9f0;
+      position: relative; overflow: hidden;
+    }
+    #radarMoon {
+      width: 12px; height: 12px; background: #ffd166; border-radius: 50%;
+      position: absolute; top: 12px; left: 59px; box-shadow: 0 0 8px #ffd166;
+    }
+    #radarPlayer {
+      width: 8px; height: 8px; background: #00f5d4; border-radius: 50%;
+      position: absolute; bottom: 15px; left: 61px;
+    }
+    #controls {
+      position: absolute; bottom: 25px; left: 20px; right: 20px;
+      display: flex; justify-content: space-between; z-index: 15;
+    }
+    .btn-group { display: flex; gap: 10px; }
+    button.ctrl {
+      width: 62px; height: 62px; border-radius: 50%;
+      background: rgba(58, 134, 255, 0.45); border: 2px solid #4cc9f0;
+      color: white; font-size: 22px; font-weight: bold; touch-action: manipulation;
+    }
+    button.ctrl:active { background: #3a86ff; }
     #overlay {
-      position: absolute;
-      background: rgba(11, 19, 43, 0.92);
-      padding: 30px;
-      border-radius: 14px;
-      border: 2px solid #3a86ff;
-      text-align: center;
-      z-index: 20;
-      max-width: 340px;
+      position: absolute; inset: 0; background: rgba(5, 8, 20, 0.9);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 25px; z-index: 30;
     }
-    h1 { font-size: 24px; margin-bottom: 10px; color: #4cc9f0; }
-    p { font-size: 14px; color: #a9bcd0; margin-bottom: 20px; line-height: 1.5; }
-    button {
-      background-color: #3a86ff;
-      color: white;
-      border: none;
-      padding: 12px 28px;
-      font-size: 18px;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
+    #overlay h1 { color: #4cc9f0; font-size: 28px; margin-bottom: 10px; }
+    #overlay p { color: #a9bcd0; max-width: 420px; margin-bottom: 20px; line-height: 1.5; }
+    #startBtn {
+      background: #3a86ff; border: none; padding: 14px 32px;
+      font-size: 18px; font-weight: bold; color: white; border-radius: 8px; cursor: pointer;
     }
-    button:hover { background-color: #2667ff; }
   </style>
+  <script src="https://cloudflare.com"></script>
 </head>
 <body>
 
 <div id="hud">
-  <span class="coin-text">🪙 Coins: <span id="coins">0</span></span>
-  <span class="dist-text">🚀 <span id="distance">0</span> km</span>
-  <span class="hp-text">❤️ <span id="health">100</span>%</span>
+  <div class="panel">
+    <div id="phaseText"><strong>Phase 1:</strong> Walk to the Rocket 🚀</div>
+    <div id="distText" style="color:#4cc9f0; margin-top:4px;">Distance to Moon: 1000 km</div>
+    <div id="hpText" style="color:#ff4d4d; margin-top:4px;">Hull Integrity: 100%</div>
+  </div>
+  <div id="radarBox" title="Navigation Map">
+    <div id="radarMoon"></div>
+    <div id="radarPlayer"></div>
+  </div>
+</div>
+
+<div id="controls">
+  <div class="btn-group">
+    <button class="ctrl" id="btnLeft">◀</button>
+    <button class="ctrl" id="btnRight">▶</button>
+  </div>
+  <div class="btn-group">
+    <button class="ctrl" id="btnUp">▲</button>
+    <button class="ctrl" id="btnDown">▼</button>
+  </div>
 </div>
 
 <div id="overlay">
-  <h1 id="titleText">🚀 Space Combat Runner</h1>
-  <p id="descText">Drag your finger (or move mouse/arrows) to steer your ship. Auto-lasers blast asteroids while you collect gold space coins!</p>
-  <button onclick="startGame()">PLAY MISSION</button>
+  <h1 id="ovTitle">🚀 3D Moon Mission</h1>
+  <p id="ovDesc"><strong>Step 1:</strong> Walk your astronaut to the rocket pad.<br><strong>Step 2:</strong> Fly through the 3D galaxy, follow the top-right radar map, dodge stones and alien UFOs, and land on the Moon!</p>
+  <button id="startBtn" onclick="startGame()">START 3D MISSION</button>
 </div>
 
-<canvas id="gameCanvas" width="420" height="700"></canvas>
-
 <script>
-  const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
-
-  let gameRunning = false;
-  let coins = 0;
-  let distance = 0;
+  let scene, camera, renderer;
+  let astronaut, rocket, moon, earth, saturn;
+  let hazards = [];
+  let gameState = "MENU"; // MENU, WALKING, FLYING, END
   let health = 100;
-  let frameCount = 0;
+  let keys = {};
 
-  // Player Spaceship
-  const player = { x: 185, y: 580, width: 45, height: 50, speed: 7 };
+  function init3D() {
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x02040c, 0.0018);
 
-  let bullets = [];
-  let enemies = [];
-  let coinItems = [];
-  let stars = [];
+    camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 2000);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-  // Create scrolling space stars
-  for (let i = 0; i < 60; i++) {
-    stars.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: Math.random() * 2 + 1,
-      speed: Math.random() * 3 + 1
-    });
+    // Lighting
+    const ambient = new THREE.AmbientLight(0x667799, 1.4);
+    scene.add(ambient);
+    const sunLight = new THREE.PointLight(0xffffff, 2, 1500);
+    sunLight.position.set(100, 150, 100);
+    scene.add(sunLight);
+
+    // 3D Galaxy Starfield
+    const starGeo = new THREE.BufferGeometry();
+    const starCoords = [];
+    for (let i = 0; i < 2500; i++) {
+      starCoords.push((Math.random() - 0.5) * 1600, (Math.random() - 0.5) * 1600, -Math.random() * 1400 + 200);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starCoords, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.8 });
+    scene.add(new THREE.Points(starGeo, starMat));
+
+    // Launchpad Platform
+    const padGeo = new THREE.CylinderGeometry(18, 20, 1, 32);
+    const padMat = new THREE.MeshStandardMaterial({ color: 0x2b3d54 });
+    const pad = new THREE.Mesh(padGeo, padMat);
+    pad.position.set(0, -2, -10);
+    scene.add(pad);
+
+    // 3D Astronaut (The Man)
+    astronaut = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.8, 16), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.65, 16, 16), new THREE.MeshStandardMaterial({ color: 0x4cc9f0 }));
+    head.position.y = 1.4;
+    astronaut.add(body, head);
+    astronaut.position.set(0, 0, 4);
+    scene.add(astronaut);
+
+    // 3D Rocket
+    rocket = new THREE.Group();
+    const fuselage = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 7, 20), new THREE.MeshStandardMaterial({ color: 0xe0e1dd }));
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.4, 2.8, 20), new THREE.MeshStandardMaterial({ color: 0xff4d4d }));
+    nose.position.y = 4.9;
+    const boosterL = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 4, 12), new THREE.MeshStandardMaterial({ color: 0x3a86ff }));
+    boosterL.position.set(-1.8, -1.2, 0);
+    const boosterR = boosterL.clone();
+    boosterR.position.set(1.8, -1.2, 0);
+    rocket.add(fuselage, nose, boosterL, boosterR);
+    rocket.position.set(0, 2, -12);
+    scene.add(rocket);
+
+    // Planets in Galaxy
+    earth = new THREE.Mesh(new THREE.SphereGeometry(28, 32, 32), new THREE.MeshStandardMaterial({ color: 0x2667ff }));
+    earth.position.set(-75, -15, -180);
+    scene.add(earth);
+
+    saturn = new THREE.Mesh(new THREE.SphereGeometry(35, 32, 32), new THREE.MeshStandardMaterial({ color: 0xfca311 }));
+    saturn.position.set(95, 30, -520);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(42, 60, 32), new THREE.MeshBasicMaterial({ color: 0xe5e5e5, side: THREE.DoubleSide }));
+    ring.rotation.x = Math.PI / 2.5;
+    saturn.add(ring);
+    scene.add(saturn);
+
+    // Destination: The Moon
+    moon = new THREE.Mesh(new THREE.SphereGeometry(32, 32, 32), new THREE.MeshStandardMaterial({ color: 0xd9d9d9 }));
+    moon.position.set(0, 0, -1000);
+    scene.add(moon);
+
+    // Spawn Stones (Asteroids) and Alien UFOs along space path
+    for (let i = 0; i < 45; i++) {
+      const isAlien = i % 3 === 0;
+      let obj;
+      if (isAlien) {
+        obj = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.7, 12, 24), new THREE.MeshStandardMaterial({ color: 0x00f5d4, emissive: 0x005544 }));
+        obj.rotation.x = Math.PI / 2;
+      } else {
+        obj = new THREE.Mesh(new THREE.DodecahedronGeometry(2.4), new THREE.MeshStandardMaterial({ color: 0x8d6e63 }));
+      }
+      obj.position.set((Math.random() - 0.5) * 48, (Math.random() - 0.5) * 28, -80 - (i * 20));
+      obj.userData = { isAlien };
+      scene.add(obj);
+      hazards.push(obj);
+    }
+
+    setupControls();
+    animate();
   }
 
-  // Controls: Touch & Mouse Drag
-  function movePlayerTo(clientX) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    let targetX = (clientX - rect.left) * scaleX - player.width / 2;
-    player.x = Math.max(0, Math.min(canvas.width - player.width, targetX));
+  function setupControls() {
+    window.addEventListener("keydown", e => keys[e.key] = true);
+    window.addEventListener("keyup", e => keys[e.key] = false);
+
+    const bindTouch = (id, keyName) => {
+      const el = document.getElementById(id);
+      el.addEventListener("touchstart", e => { e.preventDefault(); keys[keyName] = true; });
+      el.addEventListener("touchend", e => { e.preventDefault(); keys[keyName] = false; });
+      el.addEventListener("mousedown", () => keys[keyName] = true);
+      el.addEventListener("mouseup", () => keys[keyName] = false);
+    };
+    bindTouch("btnLeft", "ArrowLeft");
+    bindTouch("btnRight", "ArrowRight");
+    bindTouch("btnUp", "ArrowUp");
+    bindTouch("btnDown", "ArrowDown");
   }
-
-  canvas.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-    movePlayerTo(e.touches[0].clientX);
-  }, { passive: false });
-
-  canvas.addEventListener("mousemove", (e) => {
-    if (gameRunning) movePlayerTo(e.clientX);
-  });
-
-  // Keyboard Arrow Controls
-  const keys = {};
-  window.addEventListener("keydown", (e) => keys[e.key] = true);
-  window.addEventListener("keyup", (e) => keys[e.key] = false);
 
   function startGame() {
     document.getElementById("overlay").style.display = "none";
-    coins = 0;
-    distance = 0;
     health = 100;
-    bullets = [];
-    enemies = [];
-    coinItems = [];
-    player.x = canvas.width / 2 - player.width / 2;
-    gameRunning = true;
-    updateHUD();
-    requestAnimationFrame(gameLoop);
+    astronaut.visible = true;
+    astronaut.position.set(0, 0, 4);
+    rocket.position.set(0, 2, -12);
+    rocket.rotation.set(0, 0, 0);
+    gameState = "WALKING";
+    document.getElementById("phaseText").innerHTML = "<strong>Phase 1:</strong> Walk to the Rocket 🚀";
   }
 
-  function updateHUD() {
-    document.getElementById("coins").textContent = coins;
-    document.getElementById("distance").textContent = Math.floor(distance);
-    document.getElementById("health").textContent = health;
+  function endGame(won, msg) {
+    gameState = "END";
+    document.getElementById("ovTitle").textContent = won ? "🌕 MOON LANDING SUCCESS!" : "💥 MISSION FAILED";
+    document.getElementById("ovDesc").textContent = msg;
+    document.getElementById("startBtn").textContent = "PLAY AGAIN";
+    document.getElementById("overlay").style.display = "flex";
   }
 
-  function gameOver() {
-    gameRunning = false;
-    document.getElementById("titleText").textContent = "💥 SHIP DESTROYED";
-    document.getElementById("descText").innerHTML = `Distance Traveled: <strong>${Math.floor(distance)} km</strong><br>Coins Collected: <strong>🪙 ${coins}</strong>`;
-    document.getElementById("overlay").style.display = "block";
-  }
+  function animate() {
+    requestAnimationFrame(animate);
 
-  function gameLoop() {
-    if (!gameRunning) return;
-    frameCount++;
-    distance += 0.5;
+    if (gameState === "WALKING") {
+      if (keys["ArrowUp"]) astronaut.position.z -= 0.25;
+      if (keys["ArrowDown"]) astronaut.position.z += 0.25;
+      if (keys["ArrowLeft"]) astronaut.position.x -= 0.25;
+      if (keys["ArrowRight"]) astronaut.position.x += 0.25;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      camera.position.set(astronaut.position.x, astronaut.position.y + 4, astronaut.position.z + 10);
+      camera.lookAt(rocket.position);
 
-    // Draw & scroll space background stars
-    ctx.fillStyle = "#ffffff";
-    stars.forEach(s => {
-      s.y += s.speed;
-      if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
-      ctx.fillRect(s.x, s.y, s.size, s.size);
-    });
+      // Board the rocket when close
+      if (astronaut.position.distanceTo(rocket.position) < 4.5) {
+        astronaut.visible = false;
+        rocket.rotation.x = -Math.PI / 2; // Point rocket into deep space
+        gameState = "FLYING";
+Use code with caution.
+document.getElementById("phaseText").innerHTML = "Phase 2: Pilot Rocket to Moon 🌕";
+}
+}
+else if (gameState === "FLYING") {
+// Forward travel through space
+rocket.position.z -= 1.4;
+if (keys["ArrowLeft"] && rocket.position.x > -24) rocket.position.x -= 0.5;
+if (keys["ArrowRight"] && rocket.position.x < 24) rocket.position.x += 0.5;
+if (keys["ArrowUp"] && rocket.position.y < 15) rocket.position.y += 0.5;
+if (keys["ArrowDown"] && rocket.position.y > -15) rocket.position.y -= 0.5;
+camera.position.set(rocket.position.x * 0.7, rocket.position.y + 5, rocket.position.z + 16);
+camera.lookAt(rocket.position.x, rocket.position.y, rocket.position.z - 20);
+// Update Distance & Radar Map
+const dist = Math.max(0, Math.floor(Math.abs(moon.position.z - rocket.position.z) - 32));
+document.getElementById("distText").textContent = Distance to Moon: ${dist} km;
+const progress = Math.min(1, Math.abs(rocket.position.z) / 968);
+document.getElementById("radarPlayer").style.bottom = (15 + progress * 90) + "px";
+document.getElementById("radarPlayer").style.left = (61 + (rocket.position.x / 25) * 40) + "px";
+// Check Stones & Alien UFO collisions
+hazards.forEach(h => {
+h.rotation.y += 0.03;
+if (h.userData.isAlien) h.position.x += Math.sin(Date.now() * 0.003 + h.position.z) * 0.15;
+if (h.visible && rocket.position.distanceTo(h.position) < 3.6) {
+h.visible = false;
+health -= 25;
+document.getElementById("hpText").textContent = Hull Integrity: ${health}%;
+if (health <= 0) endGame(false, "Your rocket was destroyed by space stones and aliens!");
+}
+});
+// Reach Moon Destination
+if (dist <= 5) {
+endGame(true, "You navigated through the galaxy, escaped aliens and stones, and landed on the Moon!");
+}
+}
+earth.rotation.y += 0.002;
+saturn.rotation.y += 0.002;
+moon.rotation.y += 0.002;
+renderer.render(scene, camera);
+}
+window.addEventListener("resize", () => {
+camera.aspect = window.innerWidth / window.innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(window.innerWidth, window.innerHeight);
+});
+init3D();
 
-    // Keyboard movement
-    if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
-    if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
 
-    // Auto-fire lasers (Free Fire action feel)
-    if (frameCount % 12 === 0) {
-      bullets.push({ x: player.x + player.width / 2 - 3, y: player.y, width: 6, height: 16 });
-    }
 
-    // Spawn Asteroids & Enemy Drones
-    if (frameCount % 35 === 0) {
-      enemies.push({
-        x: Math.random() * (canvas.width - 40),
-        y: -40,
-        width: 40,
-        height: 40,
-        speed: 3 + Math.random() * 2.5
-      });
-    }
+### How It Works & How to Update
+1. **Phase 1 (Board the Rocket):** You start on a 3D launchpad as a spaceman. Press **▲** (or the Up arrow key) to walk forward and sit inside the rocket.
+2. **Phase 2 (3D Galaxy Flight):** Once inside, the rocket launches into deep space past **Earth**, **Saturn**, and glowing **galaxy stars**.
+3. **Radar Map & Obstacles:** Use the circular **Radar Map** in the top-right corner to track your path to the **Moon** while steering (**◀ ▶ ▲ ▼**) to escape incoming **space stones** and **alien UFOs**.
+4. **Update Your App:** Paste this code into **`index.html`** on GitHub (`://github.com`), click **Commit changes**, wait 1 minute, and refresh your desktop app or your friend's phone!
 
-    // Spawn Lines of Gold Coins (Subway Surfers style)
-    if (frameCount % 90 === 0) {
-      const laneX = Math.random() * (canvas.width - 40) + 10;
-      for (let i = 0; i < 4; i++) {
-        coinItems.push({ x: laneX, y: -40 - (i * 45), radius: 12, speed: 4 });
-      }
-    }
-
-    // Draw Player Rocket
-    ctx.font = "40px Arial";
-    ctx.fillText("🚀", player.x, player.y + 40);
-
-    // Update & Draw Laser Bullets
-    ctx.fillStyle = "#00f5d4";
-    for (let i = bullets.length - 1; i >= 0; i--) {
-      let b = bullets[i];
-      b.y -= 10;
-      ctx.fillRect(b.x, b.y, b.width, b.height);
-      if (b.y < 0) bullets.splice(i, 1);
-    }
-
-    // Update & Draw Coins
-    for (let i = coinItems.length - 1; i >= 0; i--) {
-      let c = coinItems[i];
-      c.y += c.speed;
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
-      ctx.fillStyle = "#ffd166";
-      ctx.fill();
-      ctx.strokeStyle = "#f77f00";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // Check coin collection
-      if (
-        c.x + c.radius > player.x &&
-        c.x - c.radius < player.x + player.width &&
-        c.y + c.radius > player.y &&
-        c.y - c.radius < player.y + player.height
-      ) {
-        coins += 10;
-        coinItems.splice(i, 1);
-        continue;
-      }
-      if (c.y > canvas.height) coinItems.splice(i, 1);
-    }
-
-    // Update & Draw Enemies / Asteroids
-    ctx.font = "36px Arial";
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      let e = enemies[i];
-      e.y += e.speed;
-      ctx.fillText("☄️", e.x, e.y + 32);
-
-      // Check bullet hit on asteroid
-      let hit = false;
-      for (let j = bullets.length - 1; j >= 0; j--) {
-        let b = bullets[j];
-        if (b.x < e.x + e.width && b.x + b.width > e.x && b.y < e.y + e.height && b.y + b.height > e.y) {
-          bullets.splice(j, 1);
-          enemies.splice(i, 1);
-          coins += 5; // Bonus coins for shooting asteroids!
-          hit = true;
-          break;
-        }
-      }
-      if (hit) continue;
-
-      // Check crash with player
-      if (
-        e.x < player.x + player.width - 8 &&
-        e.x + e.width - 8 > player.x &&
-        e.y < player.y + player.height - 8 &&
-        e.y + e.height - 8 > player.y
-      ) {
-        health -= 25;
-        enemies.splice(i, 1);
-        if (health <= 0) {
-          health = 0;
-          updateHUD();
-          gameOver();
-          return;
-        }
-      }
-
-      if (e.y > canvas.height) enemies.splice(i, 1);
-    }
-
-    updateHUD();
-    requestAnimationFrame(gameLoop);
-  }
-</script>
-
-</body>
-</html>
+<FollowUp>
+Would you like to add **laser shooting to destroy the alien UFOs** or **customize the planets and speed** in this 3D game?
+</FollowUp>
+<ActionUnit query="threejs 3d space game tutorial html" placement="bottom" />
