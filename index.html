@@ -65,18 +65,7 @@ button.navBtn:active{background:#0284c7;color:#fff}
   <button id="launchBtn" onclick="startMission()">ENTER LAUNCHPAD</button>
 </div>
 <canvas id="cv"></canvas>
-<script>
-  <div class="rCard active" id="card0" onclick="selectRocket(0)"><h3>Falcon-1 Scout</h3><p>Speed: 1.0x | Armor: Std</p><div class="tag">UNLOCKED</div></div>
-    <div class="rCard" id="card1" onclick="selectRocket(1)"><h3>Titan-V Heavy</h3><p>Speed: 1.4x | Armor: +50%</p><div class="tag" id="tag1">COST: 500 CR</div></div>
-    <div class="rCard" id="card2" onclick="selectRocket(2)"><h3>Starliner Prime</h3><p>Speed: 1.8x | Armor: +100%</p><div class="tag" id="tag2">COST: 1000 CR</div></div>
-  </div>
-  <button id="launchBtn" onclick="startMission()">ENTER LAUNCHPAD</button>
-</div>
-<canvas id="cv"></canvas>
-<script>
-Use code with caution.
-6. Now click right after <script> on the bottom line of the GitHub editor, press Enter, and paste Part 2 below:
-javascript
+
 const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
 let W,H;function rsz(){W=cv.width=innerWidth;H=cv.height=innerHeight;}addEventListener("resize",rsz);rsz();
 let state="HANGAR",level=1,credits=500,selectedRocket=0;
@@ -166,3 +155,7 @@ function loop(){
   const sc=document.getElementById("speedCanvas").getContext("2d");sc.clearRect(0,0,120,52);sc.beginPath();sc.arc(60,48,38,Math.PI,0);sc.strokeStyle="#1e293b";sc.lineWidth=8;sc.stroke();sc.beginPath();sc.arc(60,48,38,Math.PI,Math.PI+Math.min(1,speed/3200)*Math.PI);sc.strokeStyle="#38bdf8";sc.lineWidth=8;sc.stroke();document.getElementById("speedText").textContent=Math.floor(speed)+" m/s";
   const gc=document.getElementById("gpsCanvas").getContext("2d");gc.fillStyle="#0b1324";gc.fillRect(0,0,155,133);const prog=Math.max(0,Math.min(1,1-(dist/(1000+level*200)))),sx=77+(px/300)*45,sy=115-prog*90;gc.beginPath();gc.moveTo(sx,sy);gc.lineTo(77,18);gc.strokeStyle="#3b82f6";gc.lineWidth=4;gc.stroke();gc.beginPath();gc.arc(77,18,7,0,Math.PI*2);gc.fillStyle="#fbbf24";gc.fill();gc.beginPath();gc.moveTo(sx,sy-7);gc.lineTo(sx-5,sy+5);gc.lineTo(sx+5,sy+5);gc.closePath();gc.fillStyle="#38bdf8";gc.fill();document.getElementById("gpsDist").textContent=Math.max(0,Math.floor(dist))+" KM";
 }
+      loop();
+    </script>
+    </body>
+      </html>
